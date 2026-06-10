@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>1688 · 订单状态查询</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            padding: 1.8rem 2rem 2.2rem;
+            transition: all 0.2s;
+            margin-top: -220px;
+            border: 1px solid #d7dce0;
+        }
+
+        .sub {
+            color: #2c6e8f;
+            border-left: 4px solid #2c8f5e;
+            padding-left: 14px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-badge {
+            background: #e1ecf4;
+            padding: 5px 14px;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1f6392;
+        }
+
+        button {
+            background: white;
+            border: 1px solid #bdd4e4;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1e4663;
+        }
+
+        button:hover {
+            background: #eef3fa;
+            border-color: #8fb0cc;
+        }
+
+        .query-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+        .query-buttons button {
+            background: #f0f7f3;
+            border-color: #c0dfcf;
+            font-size: 0.75rem;
+            padding: 5px 14px;
+        }
+        .query-buttons button:hover {
+            background: #e0f0e6;
+        }
+        /* 全部查询按钮稍微突出一点，但仍与其他按钮并排 */
+        .query-buttons button.btn-primary {
+            background: #2c8f5e;
+            border-color: #2c8f5e;
+            color: white;
+        }
+        .query-buttons button.btn-primary:hover {
+            background: #237a4e;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 16px 18px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1.5px solid #cbdde9;
+            border-radius: 24px;
+            background: #fefefe;
+            resize: vertical;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #2c8f5e;
+            box-shadow: 0 0 0 3px rgba(44, 143, 94, 0.15);
+        }
+
+        .result-section {
+            margin-top: 28px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: #e0f2e9;
+            padding: 2px 14px;
+            border-radius: 30px;
+            color: #1a6e4a;
+        }
+
+        .preview-box {
+            background: #0f2f3c;
+            color: #eef4ff;
+            padding: 16px 20px;
+            border-radius: 24px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            white-space: pre-wrap;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .status-msg {
+            font-size: 0.75rem;
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            color: #2c6280;
+        }
+
+        footer {
+            margin-top: 24px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #6f8faa;
+            border-top: 1px solid #dee8ef;
+            padding-top: 16px;
+        }
+
+        .warning {
+            background: #fff3e0;
+            border-left: 3px solid #e67e22;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-top: 12px;
+            color: #a45a0a;
+        }
+
+        /* Toast 轻提示样式 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="sub">✨ 自动拆分同一行内的多个数字 → 英文逗号无空格 → 自动复制 → 多状态1688查询</div>
+
+    <div class="toolbar">
+        <div class="info-badge">⚡ 实时转换 + 自动复制</div>
+        <div>
+            <button id="clearBtn">🗑️ 清空</button>
+            <button id="manualCopyBtn">📋 手动复制</button>
+        </div>
+    </div>
+
+    <!-- 所有查询按钮并排显示在此 -->
+    <div class="query-buttons">
+        <button id="queryBtn" class="btn-primary">🔍 全部退款</button>
+        <button id="btnWaitBuyerSend">📦 待买家退货</button>
+        <button id="btnWaitBuyerModify">✏️ 待买家修改</button>
+        <button id="btnWaitSellerAgree">⏳ 待卖家同意</button>
+        <button id="BtnRefundSuccess">✅ 售后成功</button>
+        <button id="BtnRefundClose">❌ 售后关闭</button>
+    </div>
+
+    <textarea id="inputArea" rows="8" placeholder="请输入订单号..."></textarea>
+
+    <div class="result-section">
+        <div class="result-header">
+            <span class="result-label">📦 英文逗号结果（无空格）</span>
+            <span id="countBadge" style="background:#eef2f5; padding:2px 10px; border-radius:30px; font-size:0.7rem;">0 个数字</span>
+        </div>
+        <div class="preview-box" id="preview"></div>
+        <div class="status-msg">
+            <span id="autoCopyStatus">⏳ 等待输入...</span>
+        </div>
+        <div class="warning" id="warningMsg" style="display:none;"></div>
+    </div>
+    <footer>
+        ✅ 每行内如果有多个数字会自动拆分为独立项 → 英文逗号拼接 → 自动复制剪贴板<br>
+        🔗 点击不同状态按钮可快速查询对应售后状态的订单
+    </footer>
+</div>
+
+<!-- Toast 容器 -->
+<div id="toastMsg" class="toast"></div>
+
+<script>
+    (function() {
+        const textarea = document.getElementById('inputArea');
+        const previewDiv = document.getElementById('preview');
+        const countBadge = document.getElementById('countBadge');
+        const autoCopySpan = document.getElementById('autoCopyStatus');
+        const clearBtn = document.getElementById('clearBtn');
+        const manualCopyBtn = document.getElementById('manualCopyBtn');
+        const queryBtn = document.getElementById('queryBtn');
+        const warningMsg = document.getElementById('warningMsg');
+        const toastEl = document.getElementById('toastMsg');
+
+        // 五个状态按钮
+        const btnWaitBuyerSend = document.getElementById('btnWaitBuyerSend');
+        const btnWaitBuyerModify = document.getElementById('btnWaitBuyerModify');
+        const btnWaitSellerAgree = document.getElementById('btnWaitSellerAgree');
+        const btnRefundSuccess = document.getElementById('BtnRefundSuccess');
+        const btnRefundClose = document.getElementById('BtnRefundClose');
+
+        // 显示轻提示
+        let toastTimeout = null;
+        function showToast(message, duration = 1500) {
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastEl.textContent = message;
+            toastEl.style.opacity = '1';
+            toastTimeout = setTimeout(() => {
+                toastEl.style.opacity = '0';
+            }, duration);
+        }
+
+        // 核心处理：将文本转换成独立的数字数组（无粘连）
+        function extractNumbers(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            const numbers = [];
+            for (let line of lines) {
+                let trimmed = line.trim();
+                if (trimmed === "") continue;
+                const tokens = trimmed.split(/\s+/);
+                for (let token of tokens) {
+                    if (token === "") continue;
+                    let cleanToken = token.replace(/[\u200B-\u200D\uFEFF]/g, '');
+                    if (cleanToken !== "") {
+                        numbers.push(cleanToken);
+                    }
+                }
+            }
+            return numbers;
+        }
+
+        function getResultString(rawText) {
+            const numbers = extractNumbers(rawText);
+            return numbers.join(',');
+        }
+
+        // 获取动态的 endDate：格式 YYYY-MM-D （月份两位数，日不补零）
+        function getDynamicEndDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = today.getDate();  // 不补零，例如 10 或 1
+            return `${year}-${month}-${day}`;
+        }
+
+        // 构建1688查询URL，支持传入不同的 disputeStatus
+        function buildQueryUrl(disputeStatus = 'all') {
+            const raw = textarea.value;
+            const commaStr = getResultString(raw);
+            if (!commaStr) {
+                return null;
+            }
+            const encodedOrderIds = encodeURIComponent(commaStr);
+            const endDate = getDynamicEndDate();
+            const url = `https://dispute.1688.com/refund/buyerRefundList.htm?pageSize=20&orderIdSearch=${encodedOrderIds}&sellerLoginId=&disputeStatus=${disputeStatus}&refundId=&disputeRequest=0&disputeType=0&hasworksheet=0&startDate=2026-03-01&endDate=${endDate}`;
+            return url;
+        }
+
+        // 通用跳转函数
+        function openDisputePage(disputeStatus, statusName) {
+            const url = buildQueryUrl(disputeStatus);
+            if (!url) {
+                showToast('⚠️ 没有有效订单号，无法跳转');
+                autoCopySpan.innerHTML = '⚠️ 没有有效订单号，无法跳转';
+                autoCopySpan.style.color = '#b91c1c';
+                setTimeout(() => {
+                    if (autoCopySpan.innerHTML.includes('无法跳转')) {
+                        autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                        autoCopySpan.style.color = '#2c6280';
+                    }
+                }, 2000);
+                return;
+            }
+            window.open(url, '_blank');
+            showToast(`🚀 已打开${statusName}查询页面`);
+            autoCopySpan.innerHTML = `🚀 已打开${statusName}查询页面`;
+            autoCopySpan.style.color = '#2b7e3a';
+            setTimeout(() => {
+                if (autoCopySpan.innerHTML.includes('已打开')) {
+                    autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                    autoCopySpan.style.color = '#2c6280';
+                }
+            }, 2000);
+        }
+
+        async function updateAndAutoCopy() {
+            const raw = textarea.value;
+            const numbers = extractNumbers(raw);
+            const result = getResultString(raw);
+            const count = numbers.length;
+
+            previewDiv.textContent = result || '（无有效数字）';
+            countBadge.textContent = `${count} 个数字`;
+
+            // 过长数字警告
+            let hasLongToken = numbers.some(num => num.length > 25);
+            if (hasLongToken && count > 0) {
+                warningMsg.style.display = 'block';
+                warningMsg.innerHTML = '⚠️ 检测到过长数字，可能原数据中两个数字之间没有分隔符（无空格/无换行），请手动检查！';
+            } else {
+                warningMsg.style.display = 'none';
+            }
+
+            if (result !== '') {
+                try {
+                    await navigator.clipboard.writeText(result);
+                    autoCopySpan.innerHTML = '✅ 已自动复制';
+                    autoCopySpan.style.color = '#2b7e3a';
+                    setTimeout(() => {
+                        if (autoCopySpan.innerHTML.includes('已自动复制')) {
+                            autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                            autoCopySpan.style.color = '#2c6280';
+                        }
+                    }, 2000);
+                } catch (err) {
+                    autoCopySpan.innerHTML = '⚠️ 自动复制失败，可手动点击复制';
+                    autoCopySpan.style.color = '#b91c1c';
+                }
+            } else {
+                autoCopySpan.innerHTML = '📭 无有效数字，未复制';
+                autoCopySpan.style.color = '#b45309';
+            }
+        }
+
+        async function manualCopy() {
+            const raw = textarea.value;
+            const result = getResultString(raw);
+            if (result === '') {
+                showToast('⚠️ 没有有效数字，无法复制');
+                autoCopySpan.innerHTML = '⚠️ 没有有效数字，无法复制';
+                autoCopySpan.style.color = '#b91c1c';
+                setTimeout(() => {
+                    if (autoCopySpan.innerHTML.includes('没有有效数字')) {
+                        autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                        autoCopySpan.style.color = '#2c6280';
+                    }
+                }, 1500);
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(result);
+                showToast('✅ 复制成功！');
+                autoCopySpan.innerHTML = '📋 手动复制成功！';
+                autoCopySpan.style.color = '#2b7e3a';
+                setTimeout(() => {
+                    if (autoCopySpan.innerHTML.includes('手动复制成功')) {
+                        autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                        autoCopySpan.style.color = '#2c6280';
+                    }
+                }, 1800);
+            } catch (err) {
+                showToast('❌ 复制失败，请手动复制');
+                autoCopySpan.innerHTML = '❌ 复制失败';
+            }
+        }
+
+        function clearAll() {
+            textarea.value = '';
+            updateAndAutoCopy();
+            textarea.focus();
+            showToast('已清空');
+        }
+
+        // 全部查询
+        function allQuery() {
+            openDisputePage('all', '全部');
+        }
+
+        // 事件绑定
+        textarea.addEventListener('input', updateAndAutoCopy);
+        clearBtn.addEventListener('click', clearAll);
+        manualCopyBtn.addEventListener('click', manualCopy);
+        queryBtn.addEventListener('click', allQuery);
+
+        btnWaitBuyerSend.addEventListener('click', () => openDisputePage('waitbuyersend', '待买家退货'));
+        btnWaitBuyerModify.addEventListener('click', () => openDisputePage('waitbuyermodify', '待买家修改'));
+        btnWaitSellerAgree.addEventListener('click', () => openDisputePage('waitselleragree', '待卖家同意'));
+        btnRefundSuccess.addEventListener('click', () => openDisputePage('refundsuccess', '售后成功'));
+        btnRefundClose.addEventListener('click', () => openDisputePage('refundclose', '售后关闭'));
+
+        textarea.value = ``;
+        updateAndAutoCopy();
+    })();
+</script>
+</body>
+</html>
