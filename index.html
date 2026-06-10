@@ -217,11 +217,12 @@
     <!-- 所有查询按钮并排显示在此 -->
     <div class="query-buttons">
         <button id="queryBtn" class="btn-primary">🔍 全部退款</button>
-        <button id="btnWaitBuyerSend">📦 待买家退货</button>
-        <button id="btnWaitBuyerModify">✏️ 待买家修改</button>
-        <button id="btnWaitSellerAgree">⏳ 待卖家同意</button>
-        <button id="BtnRefundSuccess">✅ 售后成功</button>
-        <button id="BtnRefundClose">❌ 售后关闭</button>
+        <button id="btnWaitBuyerSend">📦 可约快递</button>
+        <button id="btnWaitBuyerModify">✏️ 凭证</button>
+        <button id="btnWaitSellerAgree">⏳ 已申请</button>
+        <button id="BtnRefundSuccess">✅ 退款成功</button>
+        <button id="BtnRefundClose">❌ 退款关闭</button>
+        <button id="btnWaitSellerReceive">🏠 待卖家退款</button>
     </div>
 
     <textarea id="inputArea" rows="8" placeholder="请输入订单号..."></textarea>
@@ -258,10 +259,11 @@
         const warningMsg = document.getElementById('warningMsg');
         const toastEl = document.getElementById('toastMsg');
 
-        // 五个状态按钮
+        // 状态按钮
         const btnWaitBuyerSend = document.getElementById('btnWaitBuyerSend');
         const btnWaitBuyerModify = document.getElementById('btnWaitBuyerModify');
         const btnWaitSellerAgree = document.getElementById('btnWaitSellerAgree');
+        const btnWaitSellerReceive = document.getElementById('btnWaitSellerReceive');
         const btnRefundSuccess = document.getElementById('BtnRefundSuccess');
         const btnRefundClose = document.getElementById('BtnRefundClose');
 
@@ -441,6 +443,7 @@
         btnWaitBuyerSend.addEventListener('click', () => openDisputePage('waitbuyersend', '待买家退货'));
         btnWaitBuyerModify.addEventListener('click', () => openDisputePage('waitbuyermodify', '待买家修改'));
         btnWaitSellerAgree.addEventListener('click', () => openDisputePage('waitselleragree', '待卖家同意'));
+        btnWaitSellerReceive.addEventListener('click', () => openDisputePage('waitsellerreceive', '待卖家确认收货'));
         btnRefundSuccess.addEventListener('click', () => openDisputePage('refundsuccess', '售后成功'));
         btnRefundClose.addEventListener('click', () => openDisputePage('refundclose', '售后关闭'));
 
