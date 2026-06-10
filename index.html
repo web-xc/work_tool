@@ -90,7 +90,6 @@
         .query-buttons button:hover {
             background: #e0f0e6;
         }
-        /* 全部查询按钮稍微突出一点，但仍与其他按钮并排 */
         .query-buttons button.btn-primary {
             background: #2c8f5e;
             border-color: #2c8f5e;
@@ -98,6 +97,14 @@
         }
         .query-buttons button.btn-primary:hover {
             background: #237a4e;
+        }
+        .query-buttons button.btn-batch {
+            background: #ff9800;
+            border-color: #ff9800;
+            color: white;
+        }
+        .query-buttons button.btn-batch:hover {
+            background: #e68900;
         }
 
         textarea {
@@ -181,7 +188,6 @@
             color: #a45a0a;
         }
 
-        /* Toast 轻提示样式 */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -204,7 +210,7 @@
 </head>
 <body>
 <div class="card">
-    <div class="sub">✨ 自动拆分同一行内的多个数字 → 英文逗号无空格 → 自动复制 → 多状态1688查询</div>
+    <div class="sub">✨ 自动拆分同一行内的多个订单 → 英文逗号无空格 → 自动复制 → 多状态1688查询</div>
 
     <div class="toolbar">
         <div class="info-badge">⚡ 实时转换 + 自动复制</div>
@@ -217,12 +223,13 @@
     <!-- 所有查询按钮并排显示在此 -->
     <div class="query-buttons">
         <button id="queryBtn" class="btn-primary">🔍 全部退款</button>
+        <button id="btnWaitSellerAgree">⏳ 已申请</button>
         <button id="btnWaitBuyerSend">📦 可约快递</button>
         <button id="btnWaitBuyerModify">✏️ 凭证</button>
-        <button id="btnWaitSellerAgree">⏳ 已申请</button>
+        <button id="btnWaitSellerReceive">🏠 待退款</button>
         <button id="BtnRefundSuccess">✅ 退款成功</button>
         <button id="BtnRefundClose">❌ 退款关闭</button>
-        <button id="btnWaitSellerReceive">🏠 待卖家退款</button>
+        <button id="batchOpenBtn">🚀 一键打开</button>
     </div>
 
     <textarea id="inputArea" rows="8" placeholder="请输入订单号..."></textarea>
@@ -230,7 +237,7 @@
     <div class="result-section">
         <div class="result-header">
             <span class="result-label">📦 英文逗号结果（无空格）</span>
-            <span id="countBadge" style="background:#eef2f5; padding:2px 10px; border-radius:30px; font-size:0.7rem;">0 个数字</span>
+            <span id="countBadge" style="background:#eef2f5; padding:2px 10px; border-radius:30px; font-size:0.7rem;">0 个订单</span>
         </div>
         <div class="preview-box" id="preview"></div>
         <div class="status-msg">
@@ -239,12 +246,12 @@
         <div class="warning" id="warningMsg" style="display:none;"></div>
     </div>
     <footer>
-        ✅ 每行内如果有多个数字会自动拆分为独立项 → 英文逗号拼接 → 自动复制剪贴板<br>
-        🔗 点击不同状态按钮可快速查询对应售后状态的订单
+        ✅ 每行内如果有多个订单会自动拆分为独立项 → 英文逗号拼接 → 自动复制剪贴板<br>
+        🔗 点击不同状态按钮可快速查询对应售后状态的订单<br>
+       <!-- 🚀 “一键打开6个状态”会同时打开6个状态页面（可约快递、 凭证、已申请、待卖家退款、退款成功、退款关闭） -->
     </footer>
 </div>
 
-<!-- Toast 容器 -->
 <div id="toastMsg" class="toast"></div>
 
 <script>
@@ -266,8 +273,8 @@
         const btnWaitSellerReceive = document.getElementById('btnWaitSellerReceive');
         const btnRefundSuccess = document.getElementById('BtnRefundSuccess');
         const btnRefundClose = document.getElementById('BtnRefundClose');
+        const batchOpenBtn = document.getElementById('batchOpenBtn');
 
-        // 显示轻提示
         let toastTimeout = null;
         function showToast(message, duration = 1500) {
             if (toastTimeout) clearTimeout(toastTimeout);
@@ -278,7 +285,6 @@
             }, duration);
         }
 
-        // 核心处理：将文本转换成独立的数字数组（无粘连）
         function extractNumbers(rawText) {
             const lines = rawText.split(/\r?\n/);
             const numbers = [];
@@ -302,33 +308,27 @@
             return numbers.join(',');
         }
 
-        // 获取动态的 endDate：格式 YYYY-MM-D （月份两位数，日不补零）
         function getDynamicEndDate() {
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = today.getDate();  // 不补零，例如 10 或 1
+            const day = today.getDate();
             return `${year}-${month}-${day}`;
         }
 
-        // 构建1688查询URL，支持传入不同的 disputeStatus
         function buildQueryUrl(disputeStatus = 'all') {
             const raw = textarea.value;
             const commaStr = getResultString(raw);
-            if (!commaStr) {
-                return null;
-            }
+            if (!commaStr) return null;
             const encodedOrderIds = encodeURIComponent(commaStr);
             const endDate = getDynamicEndDate();
-            const url = `https://dispute.1688.com/refund/buyerRefundList.htm?pageSize=20&orderIdSearch=${encodedOrderIds}&sellerLoginId=&disputeStatus=${disputeStatus}&refundId=&disputeRequest=0&disputeType=0&hasworksheet=0&startDate=2026-03-01&endDate=${endDate}`;
-            return url;
+            return `https://dispute.1688.com/refund/buyerRefundList.htm?pageSize=20&orderIdSearch=${encodedOrderIds}&sellerLoginId=&disputeStatus=${disputeStatus}&refundId=&disputeRequest=0&disputeType=0&hasworksheet=0&startDate=2026-03-01&endDate=${endDate}`;
         }
 
-        // 通用跳转函数
-        function openDisputePage(disputeStatus, statusName) {
+        function openDisputePage(disputeStatus, statusName, suppressToast = false) {
             const url = buildQueryUrl(disputeStatus);
             if (!url) {
-                showToast('⚠️ 没有有效订单号，无法跳转');
+                if (!suppressToast) showToast('⚠️ 没有有效订单号，无法跳转');
                 autoCopySpan.innerHTML = '⚠️ 没有有效订单号，无法跳转';
                 autoCopySpan.style.color = '#b91c1c';
                 setTimeout(() => {
@@ -337,18 +337,21 @@
                         autoCopySpan.style.color = '#2c6280';
                     }
                 }, 2000);
-                return;
+                return false;
             }
             window.open(url, '_blank');
-            showToast(`🚀 已打开${statusName}查询页面`);
-            autoCopySpan.innerHTML = `🚀 已打开${statusName}查询页面`;
-            autoCopySpan.style.color = '#2b7e3a';
-            setTimeout(() => {
-                if (autoCopySpan.innerHTML.includes('已打开')) {
-                    autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
-                    autoCopySpan.style.color = '#2c6280';
-                }
-            }, 2000);
+            if (!suppressToast) {
+                showToast(`🚀 已打开${statusName}查询页面`);
+                autoCopySpan.innerHTML = `🚀 已打开${statusName}查询页面`;
+                autoCopySpan.style.color = '#2b7e3a';
+                setTimeout(() => {
+                    if (autoCopySpan.innerHTML.includes('已打开')) {
+                        autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                        autoCopySpan.style.color = '#2c6280';
+                    }
+                }, 2000);
+            }
+            return true;
         }
 
         async function updateAndAutoCopy() {
@@ -357,14 +360,13 @@
             const result = getResultString(raw);
             const count = numbers.length;
 
-            previewDiv.textContent = result || '（无有效数字）';
-            countBadge.textContent = `${count} 个数字`;
+            previewDiv.textContent = result || '（无有效订单）';
+            countBadge.textContent = `${count} 个订单`;
 
-            // 过长数字警告
             let hasLongToken = numbers.some(num => num.length > 25);
             if (hasLongToken && count > 0) {
                 warningMsg.style.display = 'block';
-                warningMsg.innerHTML = '⚠️ 检测到过长数字，可能原数据中两个数字之间没有分隔符（无空格/无换行），请手动检查！';
+                warningMsg.innerHTML = '⚠️ 检测到过长订单，可能原数据中两个订单之间没有分隔符（无空格/无换行），请手动检查！';
             } else {
                 warningMsg.style.display = 'none';
             }
@@ -385,7 +387,7 @@
                     autoCopySpan.style.color = '#b91c1c';
                 }
             } else {
-                autoCopySpan.innerHTML = '📭 无有效数字，未复制';
+                autoCopySpan.innerHTML = '📭 无有效订单，未复制';
                 autoCopySpan.style.color = '#b45309';
             }
         }
@@ -394,11 +396,11 @@
             const raw = textarea.value;
             const result = getResultString(raw);
             if (result === '') {
-                showToast('⚠️ 没有有效数字，无法复制');
-                autoCopySpan.innerHTML = '⚠️ 没有有效数字，无法复制';
+                showToast('⚠️ 没有有效订单，无法复制');
+                autoCopySpan.innerHTML = '⚠️ 没有有效订单，无法复制';
                 autoCopySpan.style.color = '#b91c1c';
                 setTimeout(() => {
-                    if (autoCopySpan.innerHTML.includes('没有有效数字')) {
+                    if (autoCopySpan.innerHTML.includes('没有有效订单')) {
                         autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
                         autoCopySpan.style.color = '#2c6280';
                     }
@@ -429,23 +431,48 @@
             showToast('已清空');
         }
 
-        // 全部查询
         function allQuery() {
             openDisputePage('all', '全部');
         }
 
-        // 事件绑定
+        // 一键打开6个状态（无延迟，同步打开，抑制单个toast）
+        function batchOpenSix() {
+            // 先检查有无订单号
+            const raw = textarea.value;
+            const commaStr = getResultString(raw);
+            if (!commaStr) {
+                showToast('⚠️ 没有有效订单号，无法批量打开');
+                return;
+            }
+            // 六个状态: [disputeStatus, 显示名称]
+            const states = [
+                ['waitbuyersend', '可约快递'],
+                ['waitbuyermodify', '凭证'],
+                ['waitselleragree', '已申请'],
+                ['waitsellerreceive', '待卖家退款'],
+                ['refundsuccess', '退款成功'],
+                ['refundclose', '退款关闭']
+            ];
+            // 同步循环打开，无延迟
+            for (let [code, name] of states) {
+                openDisputePage(code, name, true); // suppressToast = true
+            }
+            showToast(`🚀 已同时打开 ${states.length} 个状态查询页面`);
+        }
+
         textarea.addEventListener('input', updateAndAutoCopy);
         clearBtn.addEventListener('click', clearAll);
         manualCopyBtn.addEventListener('click', manualCopy);
         queryBtn.addEventListener('click', allQuery);
 
-        btnWaitBuyerSend.addEventListener('click', () => openDisputePage('waitbuyersend', '待买家退货'));
-        btnWaitBuyerModify.addEventListener('click', () => openDisputePage('waitbuyermodify', '待买家修改'));
-        btnWaitSellerAgree.addEventListener('click', () => openDisputePage('waitselleragree', '待卖家同意'));
-        btnWaitSellerReceive.addEventListener('click', () => openDisputePage('waitsellerreceive', '待卖家确认收货'));
-        btnRefundSuccess.addEventListener('click', () => openDisputePage('refundsuccess', '售后成功'));
-        btnRefundClose.addEventListener('click', () => openDisputePage('refundclose', '售后关闭'));
+        btnWaitBuyerSend.addEventListener('click', () => openDisputePage('waitbuyersend', '可约快递'));
+        btnWaitBuyerModify.addEventListener('click', () => openDisputePage('waitbuyermodify', '凭证'));
+        btnWaitSellerAgree.addEventListener('click', () => openDisputePage('waitselleragree', '已申请'));
+        btnWaitSellerReceive.addEventListener('click', () => openDisputePage('waitsellerreceive', '待卖家退款'));
+        btnRefundSuccess.addEventListener('click', () => openDisputePage('refundsuccess', '退款成功'));
+        btnRefundClose.addEventListener('click', () => openDisputePage('refundclose', '退款关闭'));
+
+        batchOpenBtn.addEventListener('click', batchOpenSix);
 
         textarea.value = ``;
         updateAndAutoCopy();
