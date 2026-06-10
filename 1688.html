@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>数字分隔器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            /* background: #f0f4f8; */
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            /* box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1); */
+            padding: 1.8rem 2rem 2.2rem;
+            transition: all 0.2s;
+            margin-top: -220px;
+            border: 1px solid #d7dce0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 0 0.2rem 0;
+            color: #0b3b4f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sub {
+            color: #2c6e8f;
+            border-left: 4px solid #2c8f5e;
+            padding-left: 14px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-badge {
+            background: #e1ecf4;
+            padding: 5px 14px;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1f6392;
+        }
+
+        button {
+            background: white;
+            border: 1px solid #bdd4e4;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #1e4663;
+        }
+
+        button:hover {
+            background: #eef3fa;
+            border-color: #8fb0cc;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 16px 18px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1.5px solid #cbdde9;
+            border-radius: 24px;
+            background: #fefefe;
+            resize: vertical;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #2c8f5e;
+            box-shadow: 0 0 0 3px rgba(44, 143, 94, 0.15);
+        }
+
+        .result-section {
+            margin-top: 28px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: #e0f2e9;
+            padding: 2px 14px;
+            border-radius: 30px;
+            color: #1a6e4a;
+        }
+
+        .preview-box {
+            background: #0f2f3c;
+            color: #eef4ff;
+            padding: 16px 20px;
+            border-radius: 24px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            white-space: pre-wrap;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .status-msg {
+            font-size: 0.75rem;
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            color: #2c6280;
+        }
+
+        footer {
+            margin-top: 24px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #6f8faa;
+            border-top: 1px solid #dee8ef;
+            padding-top: 16px;
+        }
+
+        .warning {
+            background: #fff3e0;
+            border-left: 3px solid #e67e22;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-top: 12px;
+            color: #a45a0a;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <!-- <h1>🔗 智能逗号分隔器</h1> -->
+    <div class="sub">✨ 自动拆分同一行内的多个数字 → 英文逗号无空格 → 自动复制</div>
+
+    <div class="toolbar">
+        <div class="info-badge">⚡ 实时转换 + 自动复制</div>
+        <div>
+            <button id="clearBtn">🗑️ 清空</button>
+            <button id="manualCopyBtn">📋 手动复制</button>
+        </div>
+    </div>
+
+    <textarea id="inputArea" rows="8" placeholder="请输入订单号..."></textarea>
+
+    <div class="result-section">
+        <div class="result-header">
+            <span class="result-label">📦 英文逗号结果（无空格）</span>
+            <span id="countBadge" style="background:#eef2f5; padding:2px 10px; border-radius:30px; font-size:0.7rem;">0 个数字</span>
+        </div>
+        <div class="preview-box" id="preview"></div>
+        <div class="status-msg">
+            <span id="autoCopyStatus">⏳ 等待输入...</span>
+        </div>
+        <div class="warning" id="warningMsg" style="display:none;"></div>
+    </div>
+    <footer>
+        ✅ 每行内如果有多个数字（例如空格分开）会自动拆分为独立项 → 再拼接为英文逗号 → 自动复制到剪贴板
+    </footer>
+</div>
+
+<script>
+    (function() {
+        const textarea = document.getElementById('inputArea');
+        const previewDiv = document.getElementById('preview');
+        const countBadge = document.getElementById('countBadge');
+        const autoCopySpan = document.getElementById('autoCopyStatus');
+        const clearBtn = document.getElementById('clearBtn');
+        const manualCopyBtn = document.getElementById('manualCopyBtn');
+        const warningMsg = document.getElementById('warningMsg');
+
+        // 核心处理：将文本转换成独立的数字数组（无粘连）
+        function extractNumbers(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            const numbers = [];
+            for (let line of lines) {
+                // 去除行首尾空白
+                let trimmed = line.trim();
+                if (trimmed === "") continue;
+                // 按空白字符（空格、制表符、多个空格等）拆分成多个片段
+                const tokens = trimmed.split(/\s+/);
+                for (let token of tokens) {
+                    if (token === "") continue;
+                    // 如果token内部还包含不可见字符，进一步清理（但一般split已经处理）
+                    let cleanToken = token.replace(/[\u200B-\u200D\uFEFF]/g, ''); // 零宽字符移除
+                    if (cleanToken !== "") {
+                        numbers.push(cleanToken);
+                    }
+                }
+            }
+            return numbers;
+        }
+
+        function getResultString(rawText) {
+            const numbers = extractNumbers(rawText);
+            return numbers.join(',');
+        }
+
+        async function updateAndAutoCopy() {
+            const raw = textarea.value;
+            const numbers = extractNumbers(raw);
+            const result = getResultString(raw);
+            const count = numbers.length;
+
+            // 预览和计数
+            previewDiv.textContent = result || '（无有效数字）';
+            countBadge.textContent = `${count} 个数字`;
+
+            // 检测潜在粘连：如果某个数字长度异常（比如 > 20 且可能是两个订单号合并），给出提示但不干预自动拆分
+            let hasLongToken = numbers.some(num => num.length > 25);
+            if (hasLongToken && count > 0) {
+                warningMsg.style.display = 'block';
+                warningMsg.innerHTML = '⚠️ 检测到过长数字，可能原数据中两个数字之间没有分隔符（无空格/无换行），请手动检查！';
+            } else {
+                warningMsg.style.display = 'none';
+            }
+
+            if (result !== '') {
+                try {
+                    await navigator.clipboard.writeText(result);
+                    autoCopySpan.innerHTML = '✅ 已自动复制 (英文逗号无空格)';
+                    autoCopySpan.style.color = '#2b7e3a';
+                    setTimeout(() => {
+                        if (autoCopySpan.innerHTML.includes('已自动复制')) {
+                            autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                            autoCopySpan.style.color = '#2c6280';
+                        }
+                    }, 2000);
+                } catch (err) {
+                    autoCopySpan.innerHTML = '⚠️ 自动复制失败，可手动点击复制';
+                    autoCopySpan.style.color = '#b91c1c';
+                }
+            } else {
+                autoCopySpan.innerHTML = '📭 无有效数字，未复制';
+                autoCopySpan.style.color = '#b45309';
+            }
+        }
+
+        async function manualCopy() {
+            const raw = textarea.value;
+            const result = getResultString(raw);
+            if (result === '') {
+                autoCopySpan.innerHTML = '⚠️ 没有有效数字，无法复制';
+                autoCopySpan.style.color = '#b91c1c';
+                setTimeout(() => {
+                    if (autoCopySpan.innerHTML.includes('没有有效数字')) {
+                        autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                        autoCopySpan.style.color = '#2c6280';
+                    }
+                }, 1500);
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(result);
+                autoCopySpan.innerHTML = '📋 手动复制成功！';
+                autoCopySpan.style.color = '#2b7e3a';
+                setTimeout(() => {
+                    if (autoCopySpan.innerHTML.includes('手动复制成功')) {
+                        autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                        autoCopySpan.style.color = '#2c6280';
+                    }
+                }, 1800);
+            } catch (err) {
+                autoCopySpan.innerHTML = '❌ 复制失败';
+            }
+        }
+
+        function clearAll() {
+            textarea.value = '';
+            updateAndAutoCopy();
+            textarea.focus();
+        }
+
+        textarea.addEventListener('input', updateAndAutoCopy);
+        clearBtn.addEventListener('click', clearAll);
+        manualCopyBtn.addEventListener('click', manualCopy);
+
+        // 设置一组默认示例（包含同一行两个数字的情况，以演示拆分效果）
+        textarea.value = ``;
+        updateAndAutoCopy();
+    })();
+</script>
+</body>
+</html>
