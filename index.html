@@ -13,12 +13,13 @@
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
         }
 
+        /* ===== PC端样式 ===== */
         .card {
             max-width: 1000px;
             width: 100%;
@@ -26,7 +27,7 @@
             border-radius: 2rem;
             padding: 1.8rem 2rem 2.2rem;
             transition: all 0.2s;
-            margin-top: -220px;
+            margin-top: 4vh;
             border: 1px solid #d7dce0;
         }
 
@@ -206,6 +207,170 @@
             backdrop-filter: blur(8px);
             white-space: nowrap;
         }
+
+        /* ============================================================ */
+        /* ===== 移动端适配（≤768px） ===== */
+        /* ============================================================ */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .card {
+                margin-top: -8vh;
+                padding: 1rem 1rem 1.2rem;
+                border-radius: 1.2rem;
+            }
+
+            .sub {
+                font-size: 0.7rem;
+                padding-left: 10px;
+                margin-bottom: 6px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                margin-bottom: 10px;
+            }
+
+            .toolbar .info-badge {
+                text-align: center;
+                font-size: 0.65rem;
+                padding: 3px 10px;
+            }
+
+            .toolbar > div:last-child {
+                display: flex;
+                gap: 6px;
+            }
+
+            .toolbar > div:last-child button {
+                flex: 1;
+                text-align: center;
+                padding: 5px 8px;
+                font-size: 0.65rem;
+                border-radius: 30px;
+            }
+
+            .query-buttons {
+                gap: 5px;
+                margin-top: 4px;
+                margin-bottom: 10px;
+            }
+
+            .query-buttons button {
+                flex: 1 0 calc(50% - 5px);
+                min-width: 0;
+                padding: 6px 4px;
+                font-size: 0.62rem;
+                text-align: center;
+                border-radius: 24px;
+                white-space: nowrap;
+            }
+
+            .query-buttons button#batchOpenBtn {
+                flex: 1 0 100%;
+            }
+
+            textarea {
+                padding: 10px 12px;
+                font-size: 13px;
+                border-radius: 16px;
+                min-height: 100px;
+            }
+
+            .result-section {
+                margin-top: 14px;
+            }
+
+            .result-label {
+                font-size: 0.7rem;
+                padding: 2px 10px;
+            }
+
+            .preview-box {
+                padding: 10px 14px;
+                font-size: 12px;
+                max-height: 130px;
+                border-radius: 16px;
+            }
+
+            .status-msg {
+                font-size: 0.6rem;
+                margin-top: 6px;
+                justify-content: center;
+            }
+
+            footer {
+                margin-top: 14px;
+                padding-top: 10px;
+                font-size: 0.55rem;
+            }
+
+            .warning {
+                font-size: 0.6rem;
+                padding: 4px 10px;
+            }
+
+            .toast {
+                font-size: 0.7rem;
+                padding: 5px 14px;
+                bottom: 16px;
+                white-space: normal;
+                max-width: 90%;
+            }
+
+            #countBadge {
+                font-size: 0.55rem !important;
+                padding: 1px 8px !important;
+            }
+        }
+
+        /* ===== 小屏手机（≤480px）微调 ===== */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .card {
+                margin-top: 6vh;
+                padding: 0.6rem 0.6rem 1rem;
+                border-radius: 1rem;
+            }
+
+            .query-buttons button {
+                font-size: 0.58rem;
+                padding: 5px 3px;
+                flex: 1 0 calc(50% - 4px);
+            }
+
+            .toolbar > div:last-child button {
+                font-size: 0.6rem;
+                padding: 3px 6px;
+            }
+
+            textarea {
+                font-size: 12px;
+                padding: 8px 10px;
+                min-height: 80px;
+            }
+
+            .preview-box {
+                font-size: 11px;
+                padding: 8px 10px;
+                max-height: 100px;
+            }
+
+            .sub {
+                font-size: 0.65rem;
+            }
+
+            .info-badge {
+                font-size: 0.6rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -247,8 +412,7 @@
     </div>
     <footer>
         ✅ 每行内如果有多个订单会自动拆分为独立项 → 英文逗号拼接 → 自动复制剪贴板<br>
-        🔗 点击不同状态按钮可快速查询对应售后状态的订单<br>
-       <!-- 🚀 “一键打开6个状态”会同时打开6个状态页面（可约快递、 凭证、已申请、待卖家退款、退款成功、退款关闭） -->
+        🔗 点击不同状态按钮可快速查询对应售后状态的订单
     </footer>
 </div>
 
@@ -266,7 +430,6 @@
         const warningMsg = document.getElementById('warningMsg');
         const toastEl = document.getElementById('toastMsg');
 
-        // 状态按钮
         const btnWaitBuyerSend = document.getElementById('btnWaitBuyerSend');
         const btnWaitBuyerModify = document.getElementById('btnWaitBuyerModify');
         const btnWaitSellerAgree = document.getElementById('btnWaitSellerAgree');
@@ -291,12 +454,17 @@
             for (let line of lines) {
                 let trimmed = line.trim();
                 if (trimmed === "") continue;
-                const tokens = trimmed.split(/\s+/);
-                for (let token of tokens) {
-                    if (token === "") continue;
-                    let cleanToken = token.replace(/[\u200B-\u200D\uFEFF]/g, '');
-                    if (cleanToken !== "") {
-                        numbers.push(cleanToken);
+                const parts = trimmed.split(/,|，/);
+                for (let part of parts) {
+                    if (part === "") continue;
+                    const tokens = part.split(/\s+/);
+                    for (let token of tokens) {
+                        if (token === "") continue;
+                        let cleanToken = token.replace(/[\u200B-\u200D\uFEFF]/g, '');
+                        cleanToken = cleanToken.replace(/["“”]/g, '');
+                        if (cleanToken !== "") {
+                            numbers.push(cleanToken);
+                        }
                     }
                 }
             }
@@ -435,16 +603,13 @@
             openDisputePage('all', '全部');
         }
 
-        // 一键打开6个状态（无延迟，同步打开，抑制单个toast）
         function batchOpenSix() {
-            // 先检查有无订单号
             const raw = textarea.value;
             const commaStr = getResultString(raw);
             if (!commaStr) {
                 showToast('⚠️ 没有有效订单号，无法批量打开');
                 return;
             }
-            // 六个状态: [disputeStatus, 显示名称]
             const states = [
                 ['waitbuyersend', '可约快递'],
                 ['waitbuyermodify', '凭证'],
@@ -453,9 +618,8 @@
                 ['refundsuccess', '退款成功'],
                 ['refundclose', '退款关闭']
             ];
-            // 同步循环打开，无延迟
             for (let [code, name] of states) {
-                openDisputePage(code, name, true); // suppressToast = true
+                openDisputePage(code, name, true);
             }
             showToast(`🚀 已同时打开 ${states.length} 个状态查询页面`);
         }
