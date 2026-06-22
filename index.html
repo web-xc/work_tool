@@ -107,6 +107,15 @@
         .query-buttons button.btn-batch:hover {
             background: #e68900;
         }
+        /* 新增申请退货按钮样式 - 使用蓝色系 */
+        .query-buttons button.btn-apply {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .query-buttons button.btn-apply:hover {
+            background: #2563eb;
+        }
 
         textarea {
             width: 100%;
@@ -388,12 +397,14 @@
     <!-- 所有查询按钮并排显示在此 -->
     <div class="query-buttons">
         <button id="queryBtn" class="btn-primary">🔍 全部退款</button>
+        <button id="applyRefundBtn" class="btn-primary">📤 申请退货</button>
         <button id="btnWaitSellerAgree">⏳ 已申请</button>
         <button id="btnWaitBuyerSend">📦 可约快递</button>
         <button id="btnWaitBuyerModify">✏️ 凭证</button>
         <button id="btnWaitSellerReceive">🏠 待退款</button>
         <button id="BtnRefundSuccess">✅ 退款成功</button>
         <button id="BtnRefundClose">❌ 退款关闭</button>
+        <!-- 新增申请退货按钮 -->
         <button id="batchOpenBtn">🚀 一键打开</button>
     </div>
 
@@ -412,7 +423,7 @@
     </div>
     <footer>
         ✅ 每行内如果有多个订单会自动拆分为独立项 → 英文逗号拼接 → 自动复制剪贴板<br>
-        🔗 点击不同状态按钮可快速查询对应售后状态的订单
+        🔗 点击不同状态按钮可快速查询对应售后状态的订单；点击“申请退货”可批量打开退货申请页
     </footer>
 </div>
 
@@ -437,6 +448,8 @@
         const btnRefundSuccess = document.getElementById('BtnRefundSuccess');
         const btnRefundClose = document.getElementById('BtnRefundClose');
         const batchOpenBtn = document.getElementById('batchOpenBtn');
+        // 获取新增的申请退货按钮
+        const applyRefundBtn = document.getElementById('applyRefundBtn');
 
         let toastTimeout = null;
         function showToast(message, duration = 1500) {
@@ -520,6 +533,39 @@
                 }, 2000);
             }
             return true;
+        }
+
+        // ===== 新增功能：批量打开申请退货页面 =====
+        function openApplyRefundPages() {
+            const raw = textarea.value;
+            const numbers = extractNumbers(raw);
+            if (numbers.length === 0) {
+                showToast('⚠️ 没有有效订单号，无法打开申请退货页');
+                return;
+            }
+
+            // 基础 URL
+            const baseUrl = 'https://air.1688.com/app/ctf-page/trade-refund/apply-refund.html';
+            // 固定参数
+            const fixedParams = 'fromType=fromOrderList&userType=buyer&alipayAction=apply_refund';
+
+            let openedCount = 0;
+            // 为每个订单号打开一个新窗口
+            for (let orderId of numbers) {
+                const url = `${baseUrl}?orderId=${orderId}&${fixedParams}`;
+                window.open(url, '_blank');
+                openedCount++;
+            }
+
+            showToast(`📤 已打开 ${openedCount} 个订单的申请退货页面`);
+            autoCopySpan.innerHTML = `📤 已打开 ${openedCount} 个退货申请页`;
+            autoCopySpan.style.color = '#3b82f6';
+            setTimeout(() => {
+                if (autoCopySpan.innerHTML.includes('退货申请页')) {
+                    autoCopySpan.innerHTML = '📎 自动复制就绪 (内容变动即复制)';
+                    autoCopySpan.style.color = '#2c6280';
+                }
+            }, 3000);
         }
 
         async function updateAndAutoCopy() {
@@ -637,6 +683,8 @@
         btnRefundClose.addEventListener('click', () => openDisputePage('refundclose', '退款关闭'));
 
         batchOpenBtn.addEventListener('click', batchOpenSix);
+        // 绑定申请退货按钮事件
+        applyRefundBtn.addEventListener('click', openApplyRefundPages);
 
         textarea.value = ``;
         updateAndAutoCopy();
